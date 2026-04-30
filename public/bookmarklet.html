@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ElectricLead Pro — Bookmarklet Setup</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',sans-serif; background:#0d0d0d; color:#e5e7eb; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+    .card { background:#141414; border:1px solid #222; border-radius:16px; padding:48px; max-width:580px; width:100%; }
+    .logo { font-size:13px; font-weight:700; color:#f97316; letter-spacing:.08em; text-transform:uppercase; margin-bottom:32px; }
+    h1 { font-size:28px; font-weight:700; margin-bottom:8px; }
+    .sub { font-size:15px; color:#6b7280; margin-bottom:36px; line-height:1.6; }
+    .step { display:flex; gap:16px; margin-bottom:24px; align-items:flex-start; }
+    .step-num { width:28px; height:28px; border-radius:50%; background:#f97316; color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+    .step-text h3 { font-size:15px; font-weight:600; margin-bottom:4px; }
+    .step-text p  { font-size:13px; color:#6b7280; line-height:1.6; }
+    .bookmark-btn {
+      display:inline-flex; align-items:center; gap:10px;
+      background:#f97316; color:#fff; border-radius:10px;
+      padding:14px 24px; font-size:15px; font-weight:700;
+      text-decoration:none; margin:8px 0 4px;
+      border:2px dashed #f97316;
+      cursor:grab;
+      transition:background .2s;
+    }
+    .bookmark-btn:hover { background:#e06010; }
+    .drag-hint { font-size:12px; color:#6b7280; margin-top:6px; }
+    .divider { border:none; border-top:1px solid #222; margin:28px 0; }
+    .or { text-align:center; color:#6b7280; font-size:13px; margin:-38px 0 28px; background:#141414; display:inline-block; padding:0 12px; position:relative; left:50%; transform:translateX(-50%); }
+    .manual { background:#0d0d0d; border:1px solid #222; border-radius:8px; padding:16px; font-family:monospace; font-size:11px; color:#9ca3af; word-break:break-all; line-height:1.6; max-height:80px; overflow-y:auto; cursor:text; user-select:all; }
+    .copy-btn { margin-top:8px; background:none; border:1px solid #333; color:#9ca3af; padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; transition:all .2s; }
+    .copy-btn:hover { border-color:#f97316; color:#f97316; }
+    .tip { background:#1a0f00; border:1px solid #3d1a00; border-radius:8px; padding:14px 16px; font-size:13px; color:#9a6a3a; margin-top:24px; line-height:1.6; }
+    .tip strong { color:#f97316; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">⚡ ElectricLead Pro</div>
+  <h1>Add AI Demo to Any Website</h1>
+  <p class="sub">Drag the button below to your bookmarks bar, then click it on any client's website to instantly show the AI call demo.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-text">
+      <h3>Drag this to your bookmarks bar</h3>
+      <p>Grab the orange button and drag it up to your browser's bookmarks bar. If you don't see the bookmarks bar, press <strong>Ctrl+Shift+B</strong> to show it.</p>
+      <br>
+      <a class="bookmark-btn" id="bookmarklet" href="#">
+        ⚡ ElectricLead AI Demo
+      </a>
+      <p class="drag-hint">👆 Drag this button to your bookmarks bar</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-text">
+      <h3>Go to the client's website</h3>
+      <p>Navigate to <strong>unitechcontrolsinc.com</strong> (or any client's site you want to demo on).</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-text">
+      <h3>Click the bookmark</h3>
+      <p>Click <strong>⚡ ElectricLead AI Demo</strong> in your bookmarks bar. The orange AI call button will appear on their site instantly. Click it to demo the AI live.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div class="or">OR add manually</div>
+
+  <p style="font-size:13px;color:#6b7280;margin-bottom:8px;">Right-click your bookmarks bar → Add Bookmark → paste this as the URL:</p>
+  <div class="manual" id="manualCode">loading...</div>
+  <button class="copy-btn" onclick="copyCode()">Copy to clipboard</button>
+
+  <div class="tip">
+    <strong>💡 Sales tip:</strong> Pull up unitechcontrolsinc.com on your laptop during your meeting with them. Click the bookmark. Show them the AI answering questions live on their own website. That's your demo — no fake pages, no screenshots. Their real site, with AI added in 2 seconds.
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────
+  // Fill these in after running setup-unitech.js
+  // ─────────────────────────────────────────────
+  const VAPI_PUBLIC_KEY   = 'YOUR_VAPI_PUBLIC_KEY_HERE';
+  const VAPI_ASSISTANT_ID = 'YOUR_VAPI_ASSISTANT_ID_HERE';
+
+  // Build the bookmarklet code
+  const code = `javascript:(function(){
+    if(document.getElementById('elp-widget'))return;
+
+    // Inject styles
+    var s=document.createElement('style');
+    s.textContent='#elp-fab{position:fixed;bottom:24px;right:24px;z-index:99999;width:56px;height:56px;border-radius:50%;background:#e8500a;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(232,80,10,0.5);animation:elp-glow 2s ease-in-out infinite;}@keyframes elp-glow{0%,100%{box-shadow:0 4px 20px rgba(232,80,10,0.4)}50%{box-shadow:0 4px 32px rgba(232,80,10,0.8)}}#elp-modal{display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;}#elp-modal.open{display:flex;}#elp-box{background:#141414;border:1px solid #2a2a2a;border-radius:14px;width:380px;max-width:95vw;overflow:hidden;font-family:Segoe UI,sans-serif;}#elp-head{background:#1a1a1a;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2a2a2a;}#elp-head-left{display:flex;align-items:center;gap:12px;}#elp-av{width:38px;height:38px;border-radius:50%;background:#e8500a;display:flex;align-items:center;justify-content:center;font-size:16px;}#elp-title{font-size:14px;font-weight:700;color:#fff;}#elp-sub{font-size:11px;color:#6b7280;margin-top:1px;}#elp-close{background:none;border:none;color:#6b7280;font-size:18px;cursor:pointer;padding:4px;line-height:1;}#elp-close:hover{color:#fff;}#elp-body{padding:20px;}#elp-status{display:flex;align-items:center;gap:8px;background:#0d0d0d;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#6b7280;}#elp-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;}#elp-dot.pulse{animation:elp-pulse 1.5s infinite;}@keyframes elp-pulse{0%,100%{opacity:1}50%{opacity:0.3}}#elp-tx{min-height:140px;max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}#elp-tx:empty::before{content:"Your conversation will appear here...";color:#4b5563;font-size:12px;display:block;text-align:center;margin-top:50px;}#elp-start{width:100%;background:#e8500a;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s;}#elp-start:hover{background:#c94008;}#elp-end{width:100%;background:#dc2626;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:none;}#elp-hint{text-align:center;font-size:11px;color:#4b5563;margin-top:8px;}.elp-msg{font-size:12px;line-height:1.6;padding:8px 12px;border-radius:8px;max-width:85%;}.elp-ai{background:#1a1a1a;color:#d1d5db;border:1px solid #2a2a2a;align-self:flex-start;}.elp-user{background:#e8500a;color:#fff;align-self:flex-end;}.elp-label{font-size:10px;color:#6b7280;margin-bottom:2px;}';
+    document.head.appendChild(s);
+
+    // Build HTML
+    var w=document.createElement('div');
+    w.id='elp-widget';
+    w.innerHTML='<button id="elp-fab" onclick="document.getElementById(\\\'elp-modal\\\').classList.add(\\\'open\\\')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14v2.92z"/></svg></button><div id="elp-modal"><div id="elp-box"><div id="elp-head"><div id="elp-head-left"><div id="elp-av">⚡</div><div><div id="elp-title">Unitech Controls AI</div><div id="elp-sub">Available 24/7</div></div></div><button id="elp-close" onclick="document.getElementById(\\\'elp-modal\\\').classList.remove(\\\'open\\\')">✕</button></div><div id="elp-body"><div id="elp-status"><div id="elp-dot"></div><span id="elp-st">Click below — uses your microphone</span></div><div id="elp-tx"></div><button id="elp-start" onclick="elpStart()">📞 Start AI Call</button><button id="elp-end" onclick="elpEnd()">End Call</button><p id="elp-hint">🎤 Allow microphone access when prompted</p></div></div></div>';
+    document.body.appendChild(w);
+
+    var elpVapi=null, elpActive=false;
+
+    function elpMsg(role,text){
+      var tx=document.getElementById('elp-tx');
+      var d=document.createElement('div');
+      d.style.display='flex';d.style.flexDirection='column';
+      if(role==='user')d.style.alignItems='flex-end';
+      d.innerHTML='<div class="elp-label">'+(role==='ai'?'Unitech AI':'You')+'</div><div class="elp-msg '+(role==='ai'?'elp-ai':'elp-user')+'">'+text+'</div>';
+      tx.appendChild(d);tx.scrollTop=tx.scrollHeight;
+    }
+
+    window.elpStart=async function(){
+      document.getElementById('elp-start').textContent='Connecting...';
+      document.getElementById('elp-start').disabled=true;
+      document.getElementById('elp-dot').classList.add('pulse');
+      document.getElementById('elp-st').textContent='Connecting...';
+      if(!window.Vapi){
+        await new Promise(function(r){var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js';sc.onload=r;document.head.appendChild(sc);});
+      }
+      elpVapi=new window.Vapi('${VAPI_PUBLIC_KEY}');
+      elpVapi.on('call-start',function(){
+        elpActive=true;
+        document.getElementById('elp-start').style.display='none';
+        document.getElementById('elp-end').style.display='block';
+        document.getElementById('elp-st').textContent='Connected — speak now';
+        document.getElementById('elp-sub').textContent='Live';
+        document.getElementById('elp-fab').style.background='#dc2626';
+      });
+      elpVapi.on('call-end',function(){
+        elpActive=false;
+        document.getElementById('elp-end').style.display='none';
+        document.getElementById('elp-start').style.display='block';
+        document.getElementById('elp-start').disabled=false;
+        document.getElementById('elp-start').textContent='📞 Start AI Call';
+        document.getElementById('elp-st').textContent='Call ended';
+        document.getElementById('elp-fab').style.background='#e8500a';
+        elpMsg('ai','Call complete! Our team will follow up shortly.');
+      });
+      elpVapi.on('speech-start',function(){document.getElementById('elp-st').textContent='AI speaking...';});
+      elpVapi.on('speech-end',function(){document.getElementById('elp-st').textContent='Listening...';});
+      elpVapi.on('message',function(m){
+        if(m.type==='transcript'&&m.transcriptType==='final'){
+          elpMsg(m.role==='assistant'?'ai':'user',m.transcript);
+        }
+      });
+      elpVapi.on('error',function(e){
+        document.getElementById('elp-st').textContent='Error — try again';
+        document.getElementById('elp-start').disabled=false;
+        document.getElementById('elp-start').textContent='📞 Start AI Call';
+      });
+      await elpVapi.start('${VAPI_ASSISTANT_ID}');
+    };
+
+    window.elpEnd=function(){if(elpVapi)elpVapi.stop();};
+  })();`.replace(/\n\s*/g,' ');
+
+  // Set the bookmarklet href
+  document.getElementById('bookmarklet').href = code;
+
+  // Show manual copy version
+  document.getElementById('manualCode').textContent = code;
+
+  function copyCode() {
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✓ Copied!';
+      btn.style.color = '#22c55e';
+      btn.style.borderColor = '#22c55e';
+      setTimeout(() => {
+        btn.textContent = 'Copy to clipboard';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

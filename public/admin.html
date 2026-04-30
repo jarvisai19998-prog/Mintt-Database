@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ElectricLead Pro — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0f14; --surface: #141720; --surface2: #1c2030; --border: #252a3a;
+    --text: #e8eaf0; --text-muted: #6b7280; --text-dim: #9ca3af;
+    --accent: #6366f1; --accent-glow: rgba(99,102,241,0.15);
+    --hot: #ef4444; --hot-bg: rgba(239,68,68,0.12);
+    --warm: #f59e0b; --warm-bg: rgba(245,158,11,0.12);
+    --cold: #6366f1; --cold-bg: rgba(99,102,241,0.12);
+    --green: #10b981; --green-bg: rgba(16,185,129,0.12);
+    --blue: #3b82f6; --blue-bg: rgba(59,130,246,0.12);
+    --purple: #8b5cf6; --purple-bg: rgba(139,92,246,0.12);
+  }
+  [data-theme="light"] {
+    --bg: #f1f5f9; --surface: #ffffff; --surface2: #f8fafc;
+    --border: #e2e8f0; --text: #0f172a; --text-muted: #64748b; --text-dim: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .logo-pill { display: flex; align-items: center; gap: 8px; background: var(--accent-glow); border: 1px solid var(--accent); border-radius: 20px; padding: 6px 14px; font-weight: 600; font-size: 13px; color: var(--accent); }
+  .header-right { display: flex; gap: 10px; align-items: center; }
+  .header-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .header-btn:hover { border-color: var(--accent); color: var(--text); }
+  #last-updated { font-size: 11px; color: var(--text-muted); }
+  main { padding: 28px; max-width: 1600px; margin: 0 auto; }
+  .page-title { font-size: 30px; font-weight: 700; margin-bottom: 4px; }
+  .page-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+  .tabs { display: flex; gap: 2px; margin-bottom: 22px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 10px 20px; border-radius: 8px 8px 0 0; border: none; background: transparent; color: var(--text-muted); font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; position: relative; bottom: -1px; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: var(--accent-glow); }
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 22px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; transition: border-color 0.2s; }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 10px; }
+  .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+  .stat-value.blue { color: var(--accent); } .stat-value.red { color: var(--hot); }
+  .stat-value.green { color: var(--green); } .stat-value.amber { color: var(--warm); }
+  .calltype-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 22px; }
+  .calltype-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; transition: all 0.2s; cursor: pointer; }
+  .calltype-card:hover { border-color: var(--accent); }
+  .calltype-card.active { border-color: var(--accent); background: var(--accent-glow); }
+  .calltype-icon { font-size: 22px; margin-bottom: 6px; }
+  .calltype-label { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+  .calltype-count { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sort-btn { padding: 6px 13px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .sort-btn:hover { border-color: var(--accent); color: var(--text); }
+  .sort-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filter-select { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; outline: none; }
+  .filter-select:focus { border-color: var(--accent); }
+  .search-input { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; outline: none; width: 170px; }
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-input:focus { border-color: var(--accent); }
+  .reset-btn { padding: 6px 13px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; }
+  .reset-btn:hover { color: var(--text); }
+  .export-btn { padding: 6px 14px; border-radius: 7px; border: none; background: linear-gradient(135deg, var(--accent), #818cf8); color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: opacity 0.15s; }
+  .export-btn:hover { opacity: 0.85; }
+  .bar-divider { width: 1px; height: 22px; background: var(--border); }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table-header { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .table-header-sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); border-bottom: 1px solid var(--border); background: var(--surface2); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 13px 14px; vertical-align: middle; }
+  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .badge-hot { background: var(--hot-bg); color: var(--hot); }
+  .badge-warm { background: var(--warm-bg); color: var(--warm); }
+  .badge-cold { background: var(--cold-bg); color: var(--cold); }
+  .badge-web { background: var(--blue-bg); color: var(--blue); }
+  .ct-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .ct-emergency { background: var(--hot-bg); color: var(--hot); }
+  .ct-service { background: var(--warm-bg); color: var(--warm); }
+  .ct-installation { background: var(--green-bg); color: var(--green); }
+  .ct-product { background: var(--blue-bg); color: var(--blue); }
+  .ct-quote { background: var(--purple-bg); color: var(--purple); }
+  .ct-general { background: var(--surface2); color: var(--text-muted); }
+  .score-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 7px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+  .score-hot { background: var(--hot-bg); color: var(--hot); }
+  .score-warm { background: var(--warm-bg); color: var(--warm); }
+  .score-cold { background: var(--cold-bg); color: var(--cold); }
+  .caller-name { font-weight: 600; font-size: 13px; }
+  .caller-sub { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .service-text { font-size: 12px; color: var(--text-dim); }
+  .date-text { font-size: 12px; color: var(--text-muted); }
+  .duration-text { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+  .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+  .modal-backdrop.show { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 580px; max-width: 95vw; max-height: 85vh; overflow-y: auto; padding: 24px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+  .modal-close:hover { color: var(--text); }
+  .modal-section { margin-bottom: 18px; }
+  .modal-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 10px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .info-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
+  .info-key { font-size: 12px; color: var(--text-dim); }
+  .info-val { font-weight: 600; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+  .transcript-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 12px; line-height: 1.7; color: var(--text-dim); max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; }
+  @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(3,1fr); } .calltype-grid { grid-template-columns: repeat(3,1fr); } }
+  @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(2,1fr); } .calltype-grid { grid-template-columns: repeat(2,1fr); } main { padding: 14px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-pill">⚡ ElectricLead Pro</div>
+  <div class="header-right">
+    <span id="last-updated"></span>
+    <button class="header-btn" onclick="toggleTheme()">
+      <span id="theme-icon">☀️</span> <span id="theme-label">Light Mode</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">Dashboard</h1>
+  <p class="page-subtitle">Lead management and analytics</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('phone')">📞 Phone Leads</button>
+    <button class="tab" onclick="switchTab('web')">💬 Web Leads</button>
+    <button class="tab" onclick="switchTab('clients')">🏢 Clients</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total Calls</div><div class="stat-value blue" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">🔴 Hot Leads</div><div class="stat-value red" id="stat-hot">—</div></div>
+    <div class="stat-card"><div class="stat-label">📊 Avg Score</div><div class="stat-value amber" id="stat-score">—</div></div>
+    <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value green" id="stat-today">—</div></div>
+    <div class="stat-card"><div class="stat-label">🚨 Emergencies</div><div class="stat-value red" id="stat-emergency">—</div></div>
+  </div>
+
+  <div class="tab-panel active" id="panel-phone">
+    <div class="calltype-grid">
+      <div class="calltype-card active" id="ct-all" onclick="filterByType('')">
+        <div class="calltype-icon">📋</div>
+        <div class="calltype-label">All Calls</div>
+        <div class="calltype-count" id="ct-count-all">—</div>
+      </div>
+      <div class="calltype-card" id="ct-Emergency" onclick="filterByType('Emergency')">
+        <div class="calltype-icon">🚨</div>
+        <div class="calltype-label">Emergency</div>
+        <div class="calltype-count ct-emergency" id="ct-count-Emergency">—</div>
+      </div>
+      <div class="calltype-card" id="ct-ServiceCall" onclick="filterByType('Service Call')">
+        <div class="calltype-icon">🔧</div>
+        <div class="calltype-label">Service Call</div>
+        <div class="calltype-count ct-service" id="ct-count-Service Call">—</div>
+      </div>
+      <div class="calltype-card" id="ct-Installation" onclick="filterByType('Installation')">
+        <div class="calltype-icon">⚙️</div>
+        <div class="calltype-label">Installation</div>
+        <div class="calltype-count ct-installation" id="ct-count-Installation">—</div>
+      </div>
+      <div class="calltype-card" id="ct-ProductInfo" onclick="filterByType('Product Info')">
+        <div class="calltype-icon">📦</div>
+        <div class="calltype-label">Product Info</div>
+        <div class="calltype-count ct-product" id="ct-count-Product Info">—</div>
+      </div>
+      <div class="calltype-card" id="ct-QuoteRequest" onclick="filterByType('Quote Request')">
+        <div class="calltype-icon">💰</div>
+        <div class="calltype-label">Quote Request</div>
+        <div class="calltype-count ct-quote" id="ct-count-Quote Request">—</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Sort</span>
+      <button class="sort-btn active" id="sort-newest" onclick="setSort('newest')">↓ Newest</button>
+      <button class="sort-btn" id="sort-oldest" onclick="setSort('oldest')">↑ Oldest</button>
+      <button class="sort-btn" id="sort-score" onclick="setSort('score')">🔥 Score</button>
+      <div class="bar-divider"></div>
+      <span class="filter-label">Priority</span>
+      <select class="filter-select" id="filter-priority" onchange="applyFilters()">
+        <option value="">All</option>
+        <option value="hot">Hot (8-10)</option>
+        <option value="warm">Warm (5-7)</option>
+        <option value="cold">Cold (1-4)</option>
+      </select>
+      <span class="filter-label">Date</span>
+      <select class="filter-select" id="filter-date" onchange="applyFilters()">
+        <option value="">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+      <input type="text" class="search-input" id="search-input" placeholder="Search name or phone..." oninput="applyFilters()" />
+      <button class="reset-btn" onclick="resetFilters()">Reset</button>
+      <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <span>Recent Phone Leads</span>
+        <span class="table-header-sub" id="results-count"></span>
+      </div>
+      <div id="phone-loading" class="loading">Loading...</div>
+      <div id="phone-empty" class="empty-state" style="display:none"><div class="icon">📞</div><p>No phone leads yet. Make a test call!</p></div>
+      <table id="phone-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Call Type</th><th>Priority</th><th>Score</th><th>Name</th><th>Phone</th><th>Duration</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="phone-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-web">
+    <div class="table-wrap">
+      <div class="table-header">Web Chat Leads</div>
+      <div id="web-loading" class="loading">Loading...</div>
+      <div id="web-empty" class="empty-state" style="display:none"><div class="icon">💬</div><p>No web leads yet.</p></div>
+      <table id="web-table" style="display:none">
+        <thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Date</th></tr></thead>
+        <tbody id="web-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-clients">
+    <div class="table-wrap">
+      <div class="table-header">Clients</div>
+      <div id="clients-loading" class="loading">Loading...</div>
+      <div id="clients-empty" class="empty-state" style="display:none"><div class="icon">🏢</div><p>No clients found.</p></div>
+      <table id="clients-table" style="display:none">
+        <thead><tr><th>Company</th><th>Slug</th><th>Color</th><th>Secretary Email</th></tr></thead>
+        <tbody id="clients-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Call Details</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+  let allPhoneLeads = [];
+  let currentSort = 'newest';
+  let activeCallType = '';
+
+  function detectCallType(lead) {
+    const combined = ((lead.summary||'') + ' ' + (lead.transcript||'') + ' ' + (lead.service_needed||'')).toLowerCase();
+    if (combined.includes('emergency') || combined.includes('no power') || combined.includes('shutdown') || combined.includes('urgent') || lead.is_emergency) return 'Emergency';
+    if (combined.includes('quote') || combined.includes('pricing') || combined.includes('how much') || combined.includes('cost')) return 'Quote Request';
+    if (combined.includes('install') || combined.includes('installation') || combined.includes('new system') || combined.includes('new line')) return 'Installation';
+    if (combined.includes('product') || combined.includes('order') || combined.includes('plc') || combined.includes('vfd') || combined.includes('panel') || combined.includes('information')) return 'Product Info';
+    if (combined.includes('repair') || combined.includes('broken') || combined.includes('not working') || combined.includes('service') || combined.includes('maintenance') || combined.includes('fix')) return 'Service Call';
+    return 'General Inquiry';
+  }
+
+  function callTypeBadge(type) {
+    const map = {
+      'Emergency':      { cls: 'ct-emergency',   icon: '🚨' },
+      'Service Call':   { cls: 'ct-service',      icon: '🔧' },
+      'Installation':   { cls: 'ct-installation', icon: '⚙️' },
+      'Product Info':   { cls: 'ct-product',      icon: '📦' },
+      'Quote Request':  { cls: 'ct-quote',         icon: '💰' },
+      'General Inquiry':{ cls: 'ct-general',       icon: '📋' },
+    };
+    const m = map[type] || map['General Inquiry'];
+    return `<span class="ct-badge ${m.cls}">${m.icon} ${type}</span>`;
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-icon').textContent = isDark ? '🌙' : '☀️';
+    document.getElementById('theme-label').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['phone','web','clients'][i] === tab));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    if (tab === 'web') loadWebLeads();
+    if (tab === 'clients') loadClients();
+  }
+
+  function priorityLabel(s) { return s >= 8 ? 'HOT' : s >= 5 ? 'WARM' : 'COLD'; }
+  function priorityClass(s) { return s >= 8 ? 'hot' : s >= 5 ? 'warm' : 'cold'; }
+  function scoreClass(s) { return s >= 8 ? 'score-hot' : s >= 5 ? 'score-warm' : 'score-cold'; }
+
+  async function loadPhoneLeads() {
+    try {
+      const res = await fetch('/voice/leads');
+      allPhoneLeads = await res.json();
+      allPhoneLeads.forEach(l => { l._callType = detectCallType(l); });
+      updateStats();
+      updateCallTypeCounts();
+      applyFilters();
+      document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    } catch(e) {
+      document.getElementById('phone-loading').textContent = 'Failed to load leads.';
+    }
+  }
+
+  function updateStats() {
+    const leads = allPhoneLeads;
+    const hot = leads.filter(l => l.lead_score >= 8).length;
+    const scored = leads.filter(l => l.lead_score > 0);
+    const avg = scored.length ? (scored.reduce((a,l) => a + l.lead_score, 0) / scored.length).toFixed(1) : '—';
+    const today = leads.filter(l => new Date(l.created_at).toDateString() === new Date().toDateString()).length;
+    const emergency = leads.filter(l => l._callType === 'Emergency').length;
+    document.getElementById('stat-total').textContent = leads.length;
+    document.getElementById('stat-hot').textContent = hot;
+    document.getElementById('stat-score').textContent = avg;
+    document.getElementById('stat-today').textContent = today;
+    document.getElementById('stat-emergency').textContent = emergency;
+  }
+
+  function updateCallTypeCounts() {
+    const types = ['Emergency', 'Service Call', 'Installation', 'Product Info', 'Quote Request'];
+    document.getElementById('ct-count-all').textContent = allPhoneLeads.length;
+    types.forEach(type => {
+      const count = allPhoneLeads.filter(l => l._callType === type).length;
+      const el = document.getElementById('ct-count-' + type);
+      if (el) el.textContent = count;
+    });
+  }
+
+  function filterByType(type) {
+    activeCallType = type;
+    document.querySelectorAll('.calltype-card').forEach(c => c.classList.remove('active'));
+    const ids = { '': 'ct-all', 'Emergency': 'ct-Emergency', 'Service Call': 'ct-ServiceCall', 'Installation': 'ct-Installation', 'Product Info': 'ct-ProductInfo', 'Quote Request': 'ct-QuoteRequest' };
+    const el = document.getElementById(ids[type] || 'ct-all');
+    if (el) el.classList.add('active');
+    applyFilters();
+  }
+
+  function renderPhoneLeads(leads) {
+    document.getElementById('phone-loading').style.display = 'none';
+    const tbody = document.getElementById('phone-tbody');
+    const table = document.getElementById('phone-table');
+    const empty = document.getElementById('phone-empty');
+    const count = document.getElementById('results-count');
+    count.textContent = leads.length + ' result' + (leads.length !== 1 ? 's' : '');
+    if (!leads.length) { empty.style.display = 'block'; table.style.display = 'none'; return; }
+    empty.style.display = 'none'; table.style.display = 'table';
+    tbody.innerHTML = leads.map(l => {
+      const s = l.lead_score || 0;
+      const mins = Math.floor((l.duration_seconds||0)/60);
+      const secs = (l.duration_seconds||0) % 60;
+      const date = new Date(l.created_at).toLocaleString('en-CA', {dateStyle:'medium',timeStyle:'short'});
+      return `<tr onclick="openModal(${l.id})">
+        <td>${callTypeBadge(l._callType)}</td>
+        <td><span class="badge badge-${priorityClass(s)}">${priorityLabel(s)}</span>${l.is_emergency ? '&nbsp;<span style="font-size:10px;background:var(--hot-bg);color:var(--hot);padding:2px 6px;border-radius:4px;font-weight:700;">🚨</span>' : ''}</td>
+        <td><span class="score-badge ${scoreClass(s)}">${s}/10</span></td>
+        <td><div class="caller-name">${l.caller_name||'—'}</div></td>
+        <td><div class="caller-sub">${l.caller_phone||'—'}</div></td>
+        <td><div class="duration-text">${mins}m ${secs}s</div></td>
+        <td><div class="date-text">${date}</div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function setSort(type) {
+    currentSort = type;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sort-' + type).classList.add('active');
+    applyFilters();
+  }
+
+  function applyFilters() {
+    let leads = [...allPhoneLeads];
+    if (activeCallType) leads = leads.filter(l => l._callType === activeCallType);
+    const priority = document.getElementById('filter-priority').value;
+    const dateFilter = document.getElementById('filter-date').value;
+    const search = document.getElementById('search-input').value.toLowerCase();
+    if (priority === 'hot') leads = leads.filter(l => l.lead_score >= 8);
+    else if (priority === 'warm') leads = leads.filter(l => l.lead_score >= 5 && l.lead_score < 8);
+    else if (priority === 'cold') leads = leads.filter(l => l.lead_score < 5);
+    if (dateFilter === 'today') { const n = new Date(); leads = leads.filter(l => new Date(l.created_at).toDateString() === n.toDateString()); }
+    else if (dateFilter === 'week') { const a = new Date(Date.now()-7*864e5); leads = leads.filter(l => new Date(l.created_at) >= a); }
+    else if (dateFilter === 'month') { const a = new Date(Date.now()-30*864e5); leads = leads.filter(l => new Date(l.created_at) >= a); }
+    if (search) leads = leads.filter(l => (l.caller_name||'').toLowerCase().includes(search)||(l.caller_phone||'').includes(search)||(l.service_needed||'').toLowerCase().includes(search));
+    if (currentSort === 'newest') leads.sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
+    else if (currentSort === 'oldest') leads.sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+    else if (currentSort === 'score') leads.sort((a,b) => (b.lead_score||0)-(a.lead_score||0));
+    renderPhoneLeads(leads);
+  }
+
+  function resetFilters() {
+    activeCallType = '';
+    document.getElementById('filter-priority').value = '';
+    document.getElementById('filter-date').value = '';
+    document.getElementById('search-input').value = '';
+    document.querySelectorAll('.calltype-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('ct-all').classList.add('active');
+    setSort('newest');
+  }
+
+  function exportCSV() {
+    const rows = [['Call Type','Name','Phone','Score','Priority','Duration','Date','Emergency']];
+    allPhoneLeads.forEach(l => {
+      const mins = Math.floor((l.duration_seconds||0)/60), secs = (l.duration_seconds||0)%60;
+      rows.push([l._callType,l.caller_name||'',l.caller_phone||'',l.lead_score||'',priorityLabel(l.lead_score||0),`${mins}m ${secs}s`,new Date(l.created_at).toLocaleString(),l.is_emergency?'Yes':'No']);
+    });
+    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+    a.download = `phone-leads-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  }
+
+  function openModal(id) {
+    const l = allPhoneLeads.find(x => x.id === id); if (!l) return;
+    const s = l.lead_score || 0;
+    const mins = Math.floor((l.duration_seconds||0)/60), secs = (l.duration_seconds||0)%60;
+    const bd = l.score_breakdown || {};
+    document.getElementById('modal-title').textContent = `📞 ${l.caller_name||'Unknown Caller'}`;
+    document.getElementById('modal-body').innerHTML = `
+      <div class="modal-section">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <span class="score-badge ${scoreClass(s)}" style="font-size:18px;padding:8px 14px;">${s}/10</span>
+          ${callTypeBadge(l._callType)}
+          <div>
+            <div style="font-weight:600;">${s>=8?'🔥 Hot Lead':s>=5?'⚡ Warm Lead':'❄️ Cold Lead'}</div>
+            <div style="color:var(--text-muted);font-size:12px;margin-top:2px;">${l.score_reason||''}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Caller Info</div>
+        <div class="info-grid">
+          <div class="info-item"><span class="info-key">Name</span><span class="info-val">${l.caller_name||'—'}</span></div>
+          <div class="info-item"><span class="info-key">Phone</span><span class="info-val">${l.caller_phone||'—'}</span></div>
+          <div class="info-item"><span class="info-key">Call Type</span><span class="info-val" style="font-size:11px;">${l._callType}</span></div>
+          <div class="info-item"><span class="info-key">Duration</span><span class="info-val">${mins}m ${secs}s</span></div>
+        </div>
+      </div>
+      ${bd.urgency!==undefined?`<div class="modal-section"><div class="modal-section-title">Score Breakdown</div><div class="info-grid">
+        <div class="info-item"><span class="info-key">Urgency</span><span class="info-val">${bd.urgency}/3</span></div>
+        <div class="info-item"><span class="info-key">Service Clarity</span><span class="info-val">${bd.serviceClarity}/3</span></div>
+        <div class="info-item"><span class="info-key">Info Captured</span><span class="info-val">${bd.infoCaptured}/2</span></div>
+        <div class="info-item"><span class="info-key">Engagement</span><span class="info-val">${bd.engagement}/2</span></div>
+      </div></div>`:''}
+      ${l.summary?`<div class="modal-section"><div class="modal-section-title">Summary</div><div class="transcript-box">${l.summary}</div></div>`:''}
+      ${l.transcript?`<div class="modal-section"><div class="modal-section-title">Full Transcript</div><div class="transcript-box">${l.transcript}</div></div>`:''}
+      ${l.recording_url?`<div class="modal-section"><a href="${l.recording_url}" target="_blank" style="color:var(--accent);font-size:13px;">🎧 Listen to Recording</a></div>`:''}
+    `;
+    document.getElementById('modal-backdrop').classList.add('show');
+  }
+
+  function closeModal() { document.getElementById('modal-backdrop').classList.remove('show'); }
+  function closeModalOutside(e) { if (e.target===document.getElementById('modal-backdrop')) closeModal(); }
+
+  async function loadWebLeads() {
+    document.getElementById('web-loading').style.display='block';
+    document.getElementById('web-table').style.display='none';
+    try {
+      const res = await fetch('/admin/stats');
+      const stats = await res.json();
+      document.getElementById('web-loading').style.display='none';
+      const leads = stats.recentLeads||[];
+      if (!leads.length) { document.getElementById('web-empty').style.display='block'; return; }
+      document.getElementById('web-table').style.display='table';
+      document.getElementById('web-tbody').innerHTML = leads.map(l=>`<tr>
+        <td><div class="caller-name">${l.name||'—'}</div></td>
+        <td><div class="caller-sub">${l.phone||'—'}</div></td>
+        <td><div class="service-text">${l.service_needed||'—'}</div></td>
+        <td><span class="badge badge-web">${l.source||'web'}</span></td>
+        <td><div class="date-text">${new Date(l.created_at).toLocaleString('en-CA',{dateStyle:'medium',timeStyle:'short'})}</div></td>
+      </tr>`).join('');
+    } catch { document.getElementById('web-loading').textContent='Failed to load.'; }
+  }
+
+  async function loadClients() {
+    document.getElementById('clients-loading').style.display='block';
+    document.getElementById('clients-table').style.display='none';
+    try {
+      const res = await fetch('/admin/clients');
+      const clients = await res.json();
+      document.getElementById('clients-loading').style.display='none';
+      if (!clients.length) { document.getElementById('clients-empty').style.display='block'; return; }
+      document.getElementById('clients-table').style.display='table';
+      document.getElementById('clients-tbody').innerHTML = clients.map(c=>`<tr>
+        <td><div class="caller-name">${c.company_name}</div></td>
+        <td><div class="caller-sub">${c.slug}</div></td>
+        <td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${c.primary_color};"></span>${c.primary_color}</span></td>
+        <td><div class="service-text">${c.secretary_email||'—'}</div></td>
+      </tr>`).join('');
+    } catch { document.getElementById('clients-loading').textContent='Failed to load.'; }
+  }
+
+  loadPhoneLeads();
+  setInterval(loadPhoneLeads, 30000);
+</script>
+</body>
+</html>
