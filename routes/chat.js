@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getChatResponse } = require('../services/claude');
 const { getClientBySlug, saveLead, saveChatMessage, getChatHistory } = require('../database/db');
-const { sendLeadEmail } = require('../services/email');
+const { sendLeadNotification } = require('../services/email');
 const { v4: uuidv4 } = require('uuid');
 
 router.post('/message', async (req, res) => {
@@ -30,7 +30,7 @@ router.post('/lead', async (req, res) => {
     if (!client) return res.status(404).json({ error: 'Client not found' });
     const lead = await saveLead(client.id, { name, email, phone, serviceNeeded, message, source: 'web' });
     try {
-      await sendLeadEmail({ name, email, phone, serviceNeeded, message }, client.company_name);
+      await sendLeadNotification({ name, email, phone, serviceNeeded, message, clientName: client.company_name });
     } catch (emailErr) {
       console.error('Email failed:', emailErr.message);
     }
