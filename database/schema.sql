@@ -35,6 +35,24 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS phone_leads (
+  id SERIAL PRIMARY KEY,
+  call_id VARCHAR(255) UNIQUE,
+  client_name VARCHAR(255),
+  caller_phone VARCHAR(50),
+  caller_name VARCHAR(255),
+  service_needed TEXT,
+  transcript TEXT,
+  summary TEXT,
+  recording_url TEXT,
+  duration_seconds INTEGER,
+  is_emergency BOOLEAN DEFAULT FALSE,
+  lead_score INTEGER,
+  score_reason TEXT,
+  score_breakdown JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Test clients
 INSERT INTO clients (company_name, slug, primary_color, secretary_email)
 VALUES ('Sparks Electric', 'sparks-electric', '#FF6B00', 'test@example.com')
