@@ -19,7 +19,7 @@ router.post('/message', async (req, res) => {
     res.json({ reply, sessionId: sid });
   } catch (err) {
     console.error('Chat error:', err);
-    res.status(500).json({ error: 'Chat failed' });
+    res.status(500).json({ error: 'Chat failed', detail: err.message });
   }
 });
 
