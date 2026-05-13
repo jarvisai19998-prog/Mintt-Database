@@ -97,9 +97,9 @@ async function createUnitechAssistant() {
       },
       firstMessage: "Hi, thanks for calling Unitech Controls — I'm the AI assistant. We're Ontario's industrial electrical specialists. How can I help you today?",
       endCallMessage: "Thanks for calling Unitech Controls. Have a great day!",
-      endCallPhrases: ["goodbye", "bye", "thanks bye", "that's all", "thank you goodbye"],
-      maxDurationSeconds: 120,
-      silenceTimeoutSeconds: 10,
+      endCallPhrases: ["goodbye", "bye", "thanks bye", "thank you goodbye", "have a good day"],
+      maxDurationSeconds: 600,
+      silenceTimeoutSeconds: 30,
       backgroundSound: 'office',
     }),
   });
