@@ -7,6 +7,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+
+// Stripe webhook must be mounted BEFORE express.json() to receive raw body
+const stripeRoutes = require('./routes/stripe-webhook');
+app.use('/stripe', stripeRoutes);
+
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -14,10 +19,14 @@ app.use(express.static('public'));
 const chatRoutes = require('./routes/chat');
 const adminRoutes = require('./routes/admin');
 const voiceRoutes = require('./routes/voice');
+const authRoutes = require('./routes/auth');
+const dashboardRoutes = require('./routes/dashboard');
 
 app.use('/chat', chatRoutes);
 app.use('/admin', adminRoutes);
 app.use('/voice', voiceRoutes);
+app.use('/auth', authRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 // Demo pages
 app.get('/demo/:company', (req, res) => {

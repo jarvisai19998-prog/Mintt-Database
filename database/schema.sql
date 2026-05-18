@@ -53,6 +53,17 @@ CREATE TABLE IF NOT EXISTS phone_leads (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  client_id INTEGER REFERENCES clients(id),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  plan VARCHAR(50) DEFAULT 'pending',
+  stripe_customer_id VARCHAR(255),
+  stripe_subscription_id VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Test clients
 INSERT INTO clients (company_name, slug, primary_color, secretary_email)
 VALUES ('Sparks Electric', 'sparks-electric', '#FF6B00', 'test@example.com')

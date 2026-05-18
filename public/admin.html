@@ -124,9 +124,11 @@
   <div class="logo-pill">⚡ ElectricLead Pro</div>
   <div class="header-right">
     <span id="last-updated"></span>
+    <span id="user-info" style="font-size:12px;color:var(--text-muted);"></span>
     <button class="header-btn" onclick="toggleTheme()">
       <span id="theme-icon">☀️</span> <span id="theme-label">Light Mode</span>
     </button>
+    <button class="header-btn" onclick="logout()" style="color:var(--hot);">Sign Out</button>
   </div>
 </header>
 
@@ -261,6 +263,25 @@
 </div>
 
 <script>
+  // Auth guard
+  const _token = localStorage.getItem('mintt_token');
+  if (!_token) window.location.replace('/login.html');
+
+  const _user = JSON.parse(localStorage.getItem('mintt_user') || '{}');
+  if (_user.companyName) {
+    document.getElementById('user-info').textContent = _user.companyName + ' — ' + (_user.plan || '');
+  }
+
+  function logout() {
+    localStorage.removeItem('mintt_token');
+    localStorage.removeItem('mintt_user');
+    window.location.href = '/login.html';
+  }
+
+  function authHeaders() {
+    return { 'Authorization': 'Bearer ' + _token, 'Content-Type': 'application/json' };
+  }
+
   let allPhoneLeads = [];
   let currentSort = 'newest';
   let activeCallType = '';
@@ -474,16 +495,16 @@
     document.getElementById('web-loading').style.display='block';
     document.getElementById('web-table').style.display='none';
     try {
-      const res = await fetch('/admin/stats');
-      const stats = await res.json();
+      const res = await fetch('/dashboard/leads', { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      const leads = await res.json();
       document.getElementById('web-loading').style.display='none';
-      const leads = stats.recentLeads||[];
       if (!leads.length) { document.getElementById('web-empty').style.display='block'; return; }
       document.getElementById('web-table').style.display='table';
       document.getElementById('web-tbody').innerHTML = leads.map(l=>`<tr>
         <td><div class="caller-name">${l.name||'—'}</div></td>
         <td><div class="caller-sub">${l.phone||'—'}</div></td>
-        <td><div class="service-text">${l.service_needed||'—'}</div></td>
+        <td><div class="service-text">${l.service_needed||l.message||'—'}</div></td>
         <td><span class="badge badge-web">${l.source||'web'}</span></td>
         <td><div class="date-text">${new Date(l.created_at).toLocaleString('en-CA',{dateStyle:'medium',timeStyle:'short'})}</div></td>
       </tr>`).join('');
