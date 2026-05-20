@@ -13,6 +13,7 @@ const stripeRoutes = require('./routes/stripe-webhook');
 app.use('/stripe', stripeRoutes);
 
 app.use(express.json());
+app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.use(express.static('public'));
 
 // Routes
