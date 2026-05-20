@@ -9,9 +9,9 @@ const { requireAuth } = require('../middleware/auth');
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICE_IDS = {
-  starter: 'price_1TYGNsENZELNVTZuNgmLCugz',
-  growth:  'price_1TYGP4ENZELNVTZuuVktZpnY',
-  agency:  'price_1TYGPRENZELNVTZuo6xZM1QQ',
+  starter: 'price_1TZJc8ENZELNVTZu9rmVU4SZ',
+  growth:  'price_1TZJc9ENZELNVTZuQdFMS7f5',
+  agency:  'price_1TZJc9ENZELNVTZuvvdP5HMu',
 };
 
 // POST /auth/signup
