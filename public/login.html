@@ -124,9 +124,11 @@
 <script>
   let selectedPlan = 'starter';
 
-  if (new URLSearchParams(location.search).get('payment') === 'success') {
+  const _params = new URLSearchParams(location.search);
+  if (_params.get('payment') === 'success') {
     document.getElementById('success-banner').style.display = 'block';
   }
+  if (_params.get('signup') === '1') switchTab('signup');
 
   if (localStorage.getItem('mintt_token')) window.location.replace('/admin.html');
 
