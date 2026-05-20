@@ -14,6 +14,9 @@ app.use('/stripe', stripeRoutes);
 
 app.use(express.json());
 app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/login',     (req, res) => res.redirect('/login.html'));
+app.get('/signup',    (req, res) => res.redirect('/login.html?signup=1'));
+app.get('/dashboard', (req, res) => res.redirect('/admin.html'));
 app.use(express.static('public'));
 
 // Routes
