@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const Stripe = require('stripe');
 const { pool } = require('../database/db');
 const { requireAuth } = require('../middleware/auth');
+const { sendSignupWelcome } = require('../services/email');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -41,6 +42,13 @@ router.post('/signup', async (req, res) => {
       [email, password_hash, customer.id, 'pending']
     );
     const userId = userResult.rows[0].id;
+
+    // Welcome the new customer — non-blocking, never fail signup over an email.
+    try {
+      await sendSignupWelcome({ companyName, email, plan });
+    } catch (welcomeErr) {
+      console.error('Signup welcome email failed:', welcomeErr.message);
+    }
 
     const baseUrl = process.env.APP_URL || 'https://mintt-database-production.up.railway.app';
     const session = await stripe.checkout.sessions.create({

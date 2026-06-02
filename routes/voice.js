@@ -161,7 +161,7 @@ async function handleCallEnded(event) {
 
   const clientId = client?.id || null;
   const clientName = client?.company_name || 'Unknown Client';
-  const secretaryEmail = client?.secretary_email || process.env.SECRETARY_EMAIL || process.env.NOTIFICATION_EMAIL;
+  const secretaryEmail = client?.secretary_email || process.env.NOTIFICATION_EMAIL || 'office@mintt.ca';
 
   const lead = extractLeadFromTranscript(transcript, {
     from: fromNumber,

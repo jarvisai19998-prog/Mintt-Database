@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getChatResponse } = require('../services/claude');
 const { getClientBySlug, saveLead, saveChatMessage, getChatHistory } = require('../database/db');
-const { sendLeadNotification } = require('../services/email');
+const { sendLeadNotification, sendCustomerConfirmation } = require('../services/email');
 const { v4: uuidv4 } = require('uuid');
 
 router.post('/message', async (req, res) => {
@@ -33,6 +33,14 @@ router.post('/lead', async (req, res) => {
       await sendLeadNotification({ name, email, phone, serviceNeeded, message, clientName: client.company_name });
     } catch (emailErr) {
       console.error('Email failed:', emailErr.message);
+    }
+    // Send the customer a branded confirmation — only if we captured their email.
+    if (email) {
+      try {
+        await sendCustomerConfirmation({ name, email, serviceNeeded });
+      } catch (confirmErr) {
+        console.error('Customer confirmation failed:', confirmErr.message);
+      }
     }
     res.json({ success: true, leadId: lead.id });
   } catch (err) {

@@ -37,7 +37,7 @@ function callTypeIcon(type) {
 async function sendSecretaryEmail({ callerName, callerPhone, callerEmail, mentionedPhone, serviceNeeded, callType, callTime, durationSeconds, transcript, recordingUrl, callId, clientName, secretaryEmail, leadScore, scoreReason, scoreBreakdown }) {
   const score = Number(leadScore) || 0;
   const dur = durationSeconds ? `${Math.floor(durationSeconds/60)}m ${durationSeconds%60}s` : 'N/A';
-  const recipient = secretaryEmail || process.env.EMAIL_USER;
+  const recipient = secretaryEmail || process.env.NOTIFICATION_EMAIL || 'office@mintt.ca';
   const sender = process.env.EMAIL_USER;
   const bd = scoreBreakdown || {};
   // Escape all user-controlled fields before HTML interpolation
