@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { getAllLeads, getAllClients } = require('../database/db');
+const { requireAuth } = require('../middleware/auth');
 
 // GET /admin/stats
-router.get('/stats', async (req, res) => {
+router.get('/stats', requireAuth, async (req, res) => {
   try {
     const leads = await getAllLeads();
     const clients = await getAllClients();
@@ -20,7 +21,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // GET /admin/leads
-router.get('/leads', async (req, res) => {
+router.get('/leads', requireAuth, async (req, res) => {
   try {
     const leads = await getAllLeads();
     res.json(leads);
@@ -30,7 +31,7 @@ router.get('/leads', async (req, res) => {
 });
 
 // GET /admin/clients
-router.get('/clients', async (req, res) => {
+router.get('/clients', requireAuth, async (req, res) => {
   try {
     const clients = await getAllClients();
     res.json(clients);

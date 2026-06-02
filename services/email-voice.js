@@ -1,5 +1,9 @@
 const nodemailer = require('nodemailer');
 
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -36,6 +40,17 @@ async function sendSecretaryEmail({ callerName, callerPhone, callerEmail, mentio
   const recipient = secretaryEmail || process.env.EMAIL_USER;
   const sender = process.env.EMAIL_USER;
   const bd = scoreBreakdown || {};
+  // Escape all user-controlled fields before HTML interpolation
+  callerName    = esc(callerName);
+  callerPhone   = esc(callerPhone);
+  callerEmail   = esc(callerEmail);
+  mentionedPhone= esc(mentionedPhone);
+  serviceNeeded = esc(serviceNeeded);
+  callType      = esc(callType);
+  callTime      = esc(callTime);
+  transcript    = esc(transcript);
+  scoreReason   = esc(scoreReason);
+  clientName    = esc(clientName);
 
   const breakdownHtml = scoreBreakdown ? `
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;margin-top:8px;">
@@ -120,7 +135,11 @@ async function sendSecretaryEmail({ callerName, callerPhone, callerEmail, mentio
 // ── CUSTOMER CONFIRMATION ──
 async function sendCustomerConfirmation({ callerName, callerEmail, callerPhone, serviceNeeded, callType, callTime, clientName }) {
   const sender = process.env.EMAIL_USER;
-  const firstName = callerName ? callerName.split(' ')[0] : 'there';
+  const firstName = esc(callerName ? callerName.split(' ')[0] : 'there');
+  callerPhone   = esc(callerPhone);
+  serviceNeeded = esc(serviceNeeded);
+  callType      = esc(callType);
+  callTime      = esc(callTime);
 
   const html = `
 <!DOCTYPE html>

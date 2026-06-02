@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS clients (
   primary_color VARCHAR(7) DEFAULT '#0066cc',
   secretary_email VARCHAR(255),
   phone VARCHAR(20),
+  voice_phone_number VARCHAR(20),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -37,6 +38,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 
 CREATE TABLE IF NOT EXISTS phone_leads (
   id SERIAL PRIMARY KEY,
+  client_id INTEGER REFERENCES clients(id),
   call_id VARCHAR(255) UNIQUE,
   client_name VARCHAR(255),
   caller_phone VARCHAR(50),
@@ -68,3 +70,22 @@ CREATE TABLE IF NOT EXISTS users (
 INSERT INTO clients (company_name, slug, primary_color, secretary_email)
 VALUES ('Sparks Electric', 'sparks-electric', '#FF6B00', 'test@example.com')
 ON CONFLICT (slug) DO NOTHING;
+
+-- ── MIGRATIONS (safe to run on existing databases) ──────────────────────────
+
+-- Add voice_phone_number to clients (stores the Bland.ai/Vapi inbound number)
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS voice_phone_number VARCHAR(20);
+
+-- Add client_id to phone_leads for multi-tenancy
+ALTER TABLE phone_leads ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id);
+
+-- Index for fast per-client lead lookups
+CREATE INDEX IF NOT EXISTS idx_phone_leads_client_id ON phone_leads(client_id);
+
+-- Backfill: stamp all existing phone_leads with Unitech Controls' client_id.
+-- Safe no-op if Unitech does not exist yet or leads are already stamped.
+UPDATE phone_leads
+SET client_id = c.id
+FROM clients c
+WHERE phone_leads.client_id IS NULL
+  AND (c.company_name ILIKE '%unitech%' OR c.slug ILIKE '%unitech%');

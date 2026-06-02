@@ -331,7 +331,8 @@
 
   async function loadPhoneLeads() {
     try {
-      const res = await fetch('/voice/leads');
+      const res = await fetch('/voice/leads', { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
       allPhoneLeads = await res.json();
       allPhoneLeads.forEach(l => { l._callType = detectCallType(l); });
       updateStats();
@@ -515,7 +516,8 @@
     document.getElementById('clients-loading').style.display='block';
     document.getElementById('clients-table').style.display='none';
     try {
-      const res = await fetch('/admin/clients');
+      const res = await fetch('/admin/clients', { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
       const clients = await res.json();
       document.getElementById('clients-loading').style.display='none';
       if (!clients.length) { document.getElementById('clients-empty').style.display='block'; return; }

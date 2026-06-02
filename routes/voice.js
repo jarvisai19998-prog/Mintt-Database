@@ -4,11 +4,20 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { extractLeadFromTranscript } = require('../services/vapi');
 const { sendSecretaryEmail, sendCustomerConfirmation } = require('../services/email-voice');
 const { pool } = require('../database/db');
+const { requireAuth } = require('../middleware/auth');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// ── BLAND.AI WEBHOOK ──
+// ── VOICE WEBHOOK ──
 router.post('/webhook', async (req, res) => {
+  const webhookSecret = process.env.VOICE_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const provided = req.headers['x-webhook-secret'] || req.headers['authorization'];
+    const token = provided?.startsWith('Bearer ') ? provided.slice(7) : provided;
+    if (token !== webhookSecret) {
+      return res.status(401).send('Unauthorized');
+    }
+  }
   res.sendStatus(200);
   try {
     const event = req.body;
@@ -100,13 +109,27 @@ function extractServiceFromTranscript(transcript) {
   return 'Not specified';
 }
 
-async function savePhoneLead({ callId, clientName, callerPhone, callerName, serviceNeeded, callType, transcript, summary, recordingUrl, durationSeconds, isEmergency, leadScore, scoreReason, scoreBreakdown }) {
+async function lookupClientByPhone(dialedNumber) {
+  if (!dialedNumber) return null;
+  // Normalize to digits-only for a forgiving match
+  const digits = dialedNumber.replace(/\D/g, '');
+  const result = await pool.query(
+    `SELECT id, company_name, secretary_email
+     FROM clients
+     WHERE REGEXP_REPLACE(voice_phone_number, '\\D', '', 'g') = $1
+     LIMIT 1`,
+    [digits]
+  );
+  return result.rows[0] || null;
+}
+
+async function savePhoneLead({ clientId, callId, clientName, callerPhone, callerName, serviceNeeded, callType, transcript, summary, recordingUrl, durationSeconds, isEmergency, leadScore, scoreReason, scoreBreakdown }) {
   try {
     await pool.query(
-      `INSERT INTO phone_leads (call_id, client_name, caller_phone, caller_name, service_needed, transcript, summary, recording_url, duration_seconds, is_emergency, lead_score, score_reason, score_breakdown)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      `INSERT INTO phone_leads (client_id, call_id, client_name, caller_phone, caller_name, service_needed, transcript, summary, recording_url, duration_seconds, is_emergency, lead_score, score_reason, score_breakdown)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        ON CONFLICT (call_id) DO NOTHING`,
-      [callId, clientName, callerPhone, callerName, serviceNeeded, transcript, summary, recordingUrl, durationSeconds, isEmergency, leadScore, scoreReason, JSON.stringify(scoreBreakdown)]
+      [clientId, callId, clientName, callerPhone, callerName, serviceNeeded, transcript, summary, recordingUrl, durationSeconds, isEmergency, leadScore, scoreReason, JSON.stringify(scoreBreakdown)]
     );
     console.log('✅ Phone lead saved to database');
   } catch (err) {
@@ -122,9 +145,23 @@ async function handleCallEnded(event) {
   const durationSeconds = Math.round(event.call_length || event.duration || 0);
   const recordingUrl = event.recording_url || null;
   const fromNumber = event.from || event.caller_number || null;
+  // The number the caller dialed — used to identify which client owns this call
+  const dialedNumber = event.to || event.inbound_phone_number || event.called || null;
 
   console.log(`\n📞 Call completed: ${callId} (${durationSeconds}s)`);
-  console.log(`   From: ${fromNumber}`);
+  console.log(`   From: ${fromNumber}  →  To: ${dialedNumber}`);
+
+  // Resolve client from the dialed number
+  const client = await lookupClientByPhone(dialedNumber);
+  if (!client) {
+    console.warn(`  ⚠️  No client matched dialed number ${dialedNumber} — saving lead with null client_id`);
+  } else {
+    console.log(`  Client: ${client.company_name} (id ${client.id})`);
+  }
+
+  const clientId = client?.id || null;
+  const clientName = client?.company_name || 'Unknown Client';
+  const secretaryEmail = client?.secretary_email || process.env.SECRETARY_EMAIL || process.env.NOTIFICATION_EMAIL;
 
   const lead = extractLeadFromTranscript(transcript, {
     from: fromNumber,
@@ -133,8 +170,6 @@ async function handleCallEnded(event) {
 
   const serviceNeeded = extractServiceFromTranscript(transcript);
   const callType = extractCallType(transcript);
-  const clientName = 'Unitech Controls';
-  const secretaryEmail = process.env.SECRETARY_EMAIL || process.env.NOTIFICATION_EMAIL;
 
   const callTime = new Date().toLocaleString('en-CA', {
     timeZone: 'America/Toronto',
@@ -151,6 +186,7 @@ async function handleCallEnded(event) {
   console.log(`  Score: ${scoring.score}/10 — ${scoring.reason}`);
 
   await savePhoneLead({
+    clientId,
     callId,
     clientName,
     callerPhone: lead.callerPhone || fromNumber,
@@ -215,9 +251,15 @@ router.get('/test', (req, res) => {
   res.json({ status: 'ok', webhookUrl: `${req.protocol}://${req.get('host')}/voice/webhook` });
 });
 
-router.get('/leads', async (req, res) => {
+router.get('/leads', requireAuth, async (req, res) => {
+  if (!req.user.clientId) {
+    return res.status(402).json({ error: 'No active subscription. Please complete payment first.' });
+  }
   try {
-    const result = await pool.query('SELECT * FROM phone_leads ORDER BY created_at DESC LIMIT 50');
+    const result = await pool.query(
+      'SELECT * FROM phone_leads WHERE client_id = $1 ORDER BY created_at DESC LIMIT 50',
+      [req.user.clientId]
+    );
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch phone leads' });
