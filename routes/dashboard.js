@@ -4,17 +4,27 @@ const { pool } = require('../database/db');
 const { requireAuth } = require('../middleware/auth');
 
 router.get('/leads', requireAuth, async (req, res) => {
-  if (!req.user.clientId) {
-    return res.status(402).json({ error: 'No active subscription. Please complete payment first.' });
-  }
   try {
-    const result = await pool.query(
-      `SELECT l.*, c.company_name FROM leads l
-       LEFT JOIN clients c ON l.client_id = c.id
-       WHERE l.client_id = $1
-       ORDER BY l.created_at DESC`,
-      [req.user.clientId]
-    );
+    let result;
+    if (req.user.isAdmin) {
+      // Platform admins see all clients' web leads cross-tenant
+      result = await pool.query(
+        `SELECT l.*, c.company_name FROM leads l
+         LEFT JOIN clients c ON l.client_id = c.id
+         ORDER BY l.created_at DESC`
+      );
+    } else {
+      if (!req.user.clientId) {
+        return res.status(402).json({ error: 'No active subscription. Please complete payment first.' });
+      }
+      result = await pool.query(
+        `SELECT l.*, c.company_name FROM leads l
+         LEFT JOIN clients c ON l.client_id = c.id
+         WHERE l.client_id = $1
+         ORDER BY l.created_at DESC`,
+        [req.user.clientId]
+      );
+    }
     res.json(result.rows);
   } catch (err) {
     console.error('Dashboard leads error:', err);

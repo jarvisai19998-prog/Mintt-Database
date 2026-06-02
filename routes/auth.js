@@ -63,17 +63,23 @@ router.post('/signup', async (req, res) => {
 // POST /auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, name } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Missing email or password' });
     }
 
-    const result = await pool.query(
-      `SELECT u.*, c.company_name FROM users u
-       LEFT JOIN clients c ON u.client_id = c.id
-       WHERE u.email = $1`,
-      [email]
-    );
+    // Admin accounts share an email and are differentiated by name.
+    // Regular accounts have name=NULL and don't supply one.
+    const query = name
+      ? `SELECT u.*, c.company_name, c.primary_color FROM users u
+         LEFT JOIN clients c ON u.client_id = c.id
+         WHERE u.email = $1 AND u.name = $2`
+      : `SELECT u.*, c.company_name, c.primary_color FROM users u
+         LEFT JOIN clients c ON u.client_id = c.id
+         WHERE u.email = $1 AND u.name IS NULL`;
+    const params = name ? [email, name] : [email];
+
+    const result = await pool.query(query, params);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
@@ -81,7 +87,14 @@ router.post('/login', async (req, res) => {
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign(
-      { userId: user.id, clientId: user.client_id, email: user.email, plan: user.plan },
+      {
+        userId: user.id,
+        clientId: user.client_id,
+        email: user.email,
+        plan: user.plan,
+        name: user.name || null,
+        isAdmin: user.is_admin || false,
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -92,8 +105,12 @@ router.post('/login', async (req, res) => {
         id: user.id,
         email: user.email,
         plan: user.plan,
+        name: user.name || null,
         companyName: user.company_name,
         clientId: user.client_id,
+        isAdmin: user.is_admin || false,
+        primaryColor: user.primary_color || null,
+        forcePasswordChange: user.force_password_change || false,
       },
     });
   } catch (err) {

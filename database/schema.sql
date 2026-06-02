@@ -89,3 +89,18 @@ SET client_id = c.id
 FROM clients c
 WHERE phone_leads.client_id IS NULL
   AND (c.company_name ILIKE '%unitech%' OR c.slug ILIKE '%unitech%');
+
+-- ── Change 1: Admin user columns ─────────────────────────────────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS force_password_change BOOLEAN DEFAULT TRUE;
+
+-- Replace the single-email unique constraint with email+name uniqueness.
+-- Existing users have name=NULL, so (email, NULL) is still unique per Postgres rules.
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_name_key ON users (email, name) WHERE name IS NOT NULL;
+
+-- ── Change 2: Mintt platform client (for marketing-site chatbot leads) ────────
+INSERT INTO clients (company_name, slug, primary_color, secretary_email)
+VALUES ('Mintt', 'mintt', '#00c96b', 'office@mintt.ca')
+ON CONFLICT (slug) DO NOTHING;

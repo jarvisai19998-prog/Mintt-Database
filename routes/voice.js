@@ -252,14 +252,22 @@ router.get('/test', (req, res) => {
 });
 
 router.get('/leads', requireAuth, async (req, res) => {
-  if (!req.user.clientId) {
-    return res.status(402).json({ error: 'No active subscription. Please complete payment first.' });
-  }
   try {
-    const result = await pool.query(
-      'SELECT * FROM phone_leads WHERE client_id = $1 ORDER BY created_at DESC LIMIT 50',
-      [req.user.clientId]
-    );
+    let result;
+    if (req.user.isAdmin) {
+      // Platform admins see all clients' phone leads cross-tenant
+      result = await pool.query(
+        'SELECT * FROM phone_leads ORDER BY created_at DESC LIMIT 500'
+      );
+    } else {
+      if (!req.user.clientId) {
+        return res.status(402).json({ error: 'No active subscription. Please complete payment first.' });
+      }
+      result = await pool.query(
+        'SELECT * FROM phone_leads WHERE client_id = $1 ORDER BY created_at DESC LIMIT 50',
+        [req.user.clientId]
+      );
+    }
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch phone leads' });

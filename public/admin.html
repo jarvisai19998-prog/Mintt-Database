@@ -233,7 +233,7 @@
       <div id="web-loading" class="loading">Loading...</div>
       <div id="web-empty" class="empty-state" style="display:none"><div class="icon">💬</div><p>No web leads yet.</p></div>
       <table id="web-table" style="display:none">
-        <thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Date</th></tr></thead>
+        <thead><tr id="web-thead-row"><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Date</th></tr></thead>
         <tbody id="web-tbody"></tbody>
       </table>
     </div>
@@ -268,9 +268,46 @@
   if (!_token) window.location.replace('/login.html');
 
   const _user = JSON.parse(localStorage.getItem('mintt_user') || '{}');
-  if (_user.companyName) {
-    document.getElementById('user-info').textContent = _user.companyName + ' — ' + (_user.plan || '');
+
+  // Apply client brand colour
+  if (_user.primaryColor) {
+    document.documentElement.style.setProperty('--accent', _user.primaryColor);
+    document.documentElement.style.setProperty('--accent-glow', _user.primaryColor + '26');
+    document.documentElement.style.setProperty('--green', _user.primaryColor);
   }
+
+  // Header: show name (for admins) or company — plan
+  (function() {
+    const label = _user.isAdmin
+      ? 'Mintt Admin' + (_user.name ? ' — ' + _user.name : '')
+      : (_user.companyName ? _user.companyName + ' — ' + (_user.plan || '') : '');
+    document.getElementById('user-info').textContent = label;
+  })();
+
+  // Change 3 — Plan gating: hide voice features for Starter/Pending non-admin users
+  (function() {
+    if (_user.isAdmin) return; // admins always see everything
+    const plan = (_user.plan || 'starter').toLowerCase();
+    if (plan === 'starter' || plan === 'pending') {
+      // Hide Phone Leads tab and default to Web Leads
+      const tabs = document.querySelectorAll('.tab');
+      if (tabs[0]) tabs[0].style.display = 'none';
+      // Hide voice stats grid
+      const statsGrid = document.querySelector('.stats-grid');
+      if (statsGrid) statsGrid.style.display = 'none';
+      // Show upgrade banner
+      const banner = document.createElement('div');
+      banner.id = 'upgrade-banner';
+      banner.style.cssText = 'background:var(--accent-glow);border:1px solid var(--accent);border-radius:12px;padding:14px 20px;margin-bottom:18px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;';
+      banner.innerHTML = '<span style="font-size:18px;">⚡</span><span><strong>Upgrade to Growth</strong> to unlock AI voice agent features — phone leads, call scoring, and real-time transcripts. <a href="https://mintt.ca/#pricing" style="color:var(--accent);font-weight:600;">See plans →</a></span>';
+      const main = document.querySelector('main');
+      const tabsEl = document.querySelector('.tabs');
+      if (main && tabsEl) main.insertBefore(banner, tabsEl);
+      // Switch to web leads as default tab
+      document.addEventListener('DOMContentLoaded', function() {});
+      setTimeout(function() { switchTab('web'); }, 0);
+    }
+  })();
 
   function logout() {
     localStorage.removeItem('mintt_token');
@@ -502,7 +539,12 @@
       document.getElementById('web-loading').style.display='none';
       if (!leads.length) { document.getElementById('web-empty').style.display='block'; return; }
       document.getElementById('web-table').style.display='table';
+      // Admins see a Client column so they can identify cross-tenant leads
+      if (_user.isAdmin) {
+        document.getElementById('web-thead-row').innerHTML = '<th>Client</th><th>Name</th><th>Phone</th><th>Service</th><th>Source</th><th>Date</th>';
+      }
       document.getElementById('web-tbody').innerHTML = leads.map(l=>`<tr>
+        ${_user.isAdmin ? `<td><div class="caller-name" style="font-size:11px;color:var(--accent);">${l.company_name||'—'}</div></td>` : ''}
         <td><div class="caller-name">${l.name||'—'}</div></td>
         <td><div class="caller-sub">${l.phone||'—'}</div></td>
         <td><div class="service-text">${l.service_needed||l.message||'—'}</div></td>
