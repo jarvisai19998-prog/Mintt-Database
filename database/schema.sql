@@ -64,7 +64,11 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Test clients
+-- Seed clients
 INSERT INTO clients (company_name, slug, primary_color, secretary_email)
 VALUES ('Sparks Electric', 'sparks-electric', '#FF6B00', 'test@example.com')
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO clients (company_name, slug, primary_color, secretary_email)
+VALUES ('Mintt', 'mintt', '#00c96b', 'jarvis.ai19998@gmail.com')
 ON CONFLICT (slug) DO NOTHING;

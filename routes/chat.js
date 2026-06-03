@@ -30,7 +30,7 @@ router.post('/lead', async (req, res) => {
     if (!client) return res.status(404).json({ error: 'Client not found' });
     const lead = await saveLead(client.id, { name, email, phone, serviceNeeded, message, source: 'web' });
     try {
-      await sendLeadNotification({ name, email, phone, serviceNeeded, message, clientName: client.company_name });
+      await sendLeadNotification({ name, email, phone, serviceNeeded, message, clientName: client.company_name, notificationEmail: client.secretary_email });
     } catch (emailErr) {
       console.error('Email failed:', emailErr.message);
     }
