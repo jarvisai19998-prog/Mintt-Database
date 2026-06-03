@@ -1,5 +1,3 @@
-const nodemailer = require('nodemailer');
-
 function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
@@ -7,18 +5,21 @@ function esc(str) {
 // Single source of truth for where internal notifications land.
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'office@mintt.ca';
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD,
-  },
-  connectionTimeout: 8000,
-  greetingTimeout: 8000,
-  socketTimeout: 10000,
-});
+// Resend HTTP API — works on Railway (no outbound SMTP port blocking)
+async function send({ to, subject, html, fromName = 'Mintt' }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error('RESEND_API_KEY env var not set');
+  const fromAddr = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: `${fromName} <${fromAddr}>`, to, subject, html }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Resend API ${res.status}: ${body}`);
+  }
+}
 
 async function sendLeadNotification({ name, phone, email, company, serviceNeeded, message, source, clientName, notificationEmail }) {
   const recipient = notificationEmail || NOTIFICATION_EMAIL;
@@ -73,20 +74,13 @@ async function sendLeadNotification({ name, phone, email, company, serviceNeeded
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"${clientName || 'ElectricLead Pro'}" <${sender}>`,
-    to: recipient,
-    subject: `New Web Lead: ${name || 'Unknown'} — ${serviceNeeded || 'General Inquiry'}`,
-    html,
-  });
-
+  await send({ to: recipient, subject: `New Web Lead: ${name || 'Unknown'} — ${serviceNeeded || 'General Inquiry'}`, html, fromName: clientName || 'ElectricLead Pro' });
   console.log(`✅ Web lead email sent to ${recipient}`);
 }
 
 // ── CUSTOMER CONFIRMATION (Mintt-branded) ──
 // Sent to the person who submitted info via the chatbot/web form.
 async function sendCustomerConfirmation({ name, email, serviceNeeded }) {
-  const sender = process.env.EMAIL_USER;
   const firstName = esc(name ? String(name).trim().split(/\s+/)[0] : 'there');
   const _service = esc(serviceNeeded);
 
@@ -130,20 +124,13 @@ async function sendCustomerConfirmation({ name, email, serviceNeeded }) {
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"Mintt" <${sender}>`,
-    to: email,
-    subject: `Thanks for reaching out, ${firstName}! — Mintt`,
-    html,
-  });
-
+  await send({ to: email, subject: `Thanks for reaching out, ${firstName}! — Mintt`, html });
   console.log(`✅ Customer confirmation sent to ${email}`);
 }
 
 // ── SIGNUP WELCOME (Mintt-branded) ──
 // Sent to a new paying customer right after they create an account.
 async function sendSignupWelcome({ companyName, email, plan }) {
-  const sender = process.env.EMAIL_USER;
   const _company = esc(companyName);
   const _plan = esc(plan ? String(plan).charAt(0).toUpperCase() + String(plan).slice(1) : '');
 
@@ -186,13 +173,7 @@ async function sendSignupWelcome({ companyName, email, plan }) {
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"Mintt" <${sender}>`,
-    to: email,
-    subject: 'Welcome to Mintt 🎉',
-    html,
-  });
-
+  await send({ to: email, subject: 'Welcome to Mintt 🎉', html });
   console.log(`✅ Signup welcome sent to ${email}`);
 }
 
