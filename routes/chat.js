@@ -29,20 +29,14 @@ router.post('/lead', async (req, res) => {
     const client = await getClientBySlug(clientSlug || 'sparks-electric');
     if (!client) return res.status(404).json({ error: 'Client not found' });
     const lead = await saveLead(client.id, { name, email, phone, serviceNeeded, message, source: 'web' });
-    try {
-      await sendLeadNotification({ name, email, phone, serviceNeeded, message, clientName: client.company_name });
-    } catch (emailErr) {
-      console.error('Email failed:', emailErr.message);
-    }
-    // Send the customer a branded confirmation — only if we captured their email.
-    if (email) {
-      try {
-        await sendCustomerConfirmation({ name, email, serviceNeeded });
-      } catch (confirmErr) {
-        console.error('Customer confirmation failed:', confirmErr.message);
-      }
-    }
+    // Fire-and-forget: respond immediately, don't let SMTP block the request
     res.json({ success: true, leadId: lead.id });
+    sendLeadNotification({ name, email, phone, serviceNeeded, message, clientName: client.company_name, notificationEmail: client.secretary_email })
+      .catch(err => console.error('Email failed:', err.message));
+    if (email) {
+      sendCustomerConfirmation({ name, email, serviceNeeded })
+        .catch(err => console.error('Customer confirmation failed:', err.message));
+    }
   } catch (err) {
     console.error('Lead error:', err);
     res.status(500).json({ error: 'Failed to save lead' });

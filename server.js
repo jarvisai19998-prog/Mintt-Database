@@ -7,7 +7,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://mintt.ca,https://mintt-database-production.up.railway.app').split(',');
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://mintt.ca,https://www.mintt.ca,https://mintt-database-production.up.railway.app').split(',');
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
