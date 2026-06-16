@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Unitech Controls — Mintt Widget Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #003d7a; }
+    .info {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .status {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Unitech Controls Inc</h1>
+  <p>Industrial Electrical & Controls — Greater Toronto Area</p>
+
+  <div class="info">
+    <h3>About This Test Page</h3>
+    <p>This page simulates a Unitech client website with the Mintt widget installed. 
+    Use the chat/voice button in the bottom right to test the AI agent.</p>
+    <ul>
+      <li>Try asking about their services</li>
+      <li>Submit your name, email and phone as a test lead</li>
+      <li>Then check the dashboard to confirm the lead appeared</li>
+    </ul>
+  </div>
+
+  <div class="status">
+    ✅ Widget loading from: <strong>https://prance-chef-untoasted.ngrok-free.dev</strong><br>
+    ✅ Client slug: <strong>unitech</strong><br>
+    ✅ Dashboard: <a href="https://mintt-database-production.up.railway.app/admin.html" target="_blank">Open Unitech Dashboard</a>
+  </div>
+
+  <!-- Mintt Widget -->
+  <script 
+    src="https://prance-chef-untoasted.ngrok-free.dev/widget.js" 
+    data-client="unitech">
+  </script>
+
+</body>
+</html>

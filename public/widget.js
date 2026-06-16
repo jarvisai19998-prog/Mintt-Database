@@ -17,6 +17,6 @@
   // Load the main widget
   var s = document.createElement('script');
   s.id = 'mintt-widget';
-  s.src = 'https://mintt-database-production.up.railway.app/vapi-widget.js';
+s.src = 'https://mintt-database-production.up.railway.app/vapi-widget.js';
   document.head.appendChild(s);
 })();

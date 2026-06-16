@@ -7,7 +7,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://mintt.ca,https://www.mintt.ca,https://mintt-database-production.up.railway.app').split(',');
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://mintt.ca,https://www.mintt.ca,https://mintt-database-production.up.railway.app,https://prance-chef-untoasted.ngrok-free.dev').split(',');
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
@@ -31,12 +31,12 @@ app.get('/dashboard', (req, res) => res.redirect('/admin.html'));
 app.use(express.static('public'));
 
 // Routes
-const chatRoutes    = require('./routes/chat');
-const adminRoutes   = require('./routes/admin');
-const voiceRoutes   = require('./routes/voice');
-const authRoutes    = require('./routes/auth');
+const chatRoutes      = require('./routes/chat');
+const adminRoutes     = require('./routes/admin');
+const voiceRoutes     = require('./routes/voice');
+const authRoutes      = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
-const widgetRoutes  = require('./routes/widget');
+const widgetRoutes    = require('./routes/widget');
 
 app.use('/chat',      chatLimiter, chatRoutes);
 app.use('/admin',     adminRoutes);
