@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 
 // GET /admin/stats
 router.get('/stats', requireAuth, async (req, res) => {
+  if (!req.user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   try {
     const leads = await getAllLeads();
     const clients = await getAllClients();
@@ -22,6 +23,7 @@ router.get('/stats', requireAuth, async (req, res) => {
 
 // GET /admin/leads
 router.get('/leads', requireAuth, async (req, res) => {
+  if (!req.user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   try {
     const leads = await getAllLeads();
     res.json(leads);
@@ -32,6 +34,7 @@ router.get('/leads', requireAuth, async (req, res) => {
 
 // GET /admin/clients
 router.get('/clients', requireAuth, async (req, res) => {
+  if (!req.user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   try {
     const clients = await getAllClients();
     res.json(clients);

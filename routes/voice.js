@@ -248,7 +248,8 @@ async function handleCallEnded(event) {
 }
 
 router.get('/test', (req, res) => {
-  res.json({ status: 'ok', webhookUrl: `${req.protocol}://${req.get('host')}/voice/webhook` });
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  res.json({ status: 'ok', webhookUrl: `${protocol}://${req.get('host')}/voice/webhook` });
 });
 
 router.get('/leads', requireAuth, async (req, res) => {

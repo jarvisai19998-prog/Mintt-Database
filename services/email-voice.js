@@ -1,16 +1,23 @@
-const nodemailer = require('nodemailer');
-
 function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD,
-  },
-});
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'office@mintt.ca';
+
+async function send({ to, subject, html, fromName = 'ElectricLead Pro' }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error('RESEND_API_KEY env var not set');
+  const fromAddr = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: `${fromName} <${fromAddr}>`, to, subject, html }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Resend API ${res.status}: ${body}`);
+  }
+}
 
 // ── HELPERS ──
 function scoreColor(score) {
@@ -37,10 +44,9 @@ function callTypeIcon(type) {
 async function sendSecretaryEmail({ callerName, callerPhone, callerEmail, mentionedPhone, serviceNeeded, callType, callTime, durationSeconds, transcript, recordingUrl, callId, clientName, secretaryEmail, leadScore, scoreReason, scoreBreakdown }) {
   const score = Number(leadScore) || 0;
   const dur = durationSeconds ? `${Math.floor(durationSeconds/60)}m ${durationSeconds%60}s` : 'N/A';
-  const recipient = secretaryEmail || process.env.NOTIFICATION_EMAIL || 'office@mintt.ca';
-  const sender = process.env.EMAIL_USER;
+  const recipient = secretaryEmail || NOTIFICATION_EMAIL;
   const bd = scoreBreakdown || {};
-  // Escape all user-controlled fields before HTML interpolation
+
   callerName    = esc(callerName);
   callerPhone   = esc(callerPhone);
   callerEmail   = esc(callerEmail);
@@ -124,22 +130,22 @@ async function sendSecretaryEmail({ callerName, callerPhone, callerEmail, mentio
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"${clientName} — AI Receptionist" <${sender}>`,
+  await send({
     to: recipient,
     subject: `[${score}/10] ${callTypeIcon(callType)} ${callType || 'New Lead'}: ${callerName || callerPhone || 'Unknown'} — ${serviceNeeded || 'General Inquiry'}`,
     html,
+    fromName: clientName || 'ElectricLead Pro',
   });
 }
 
 // ── CUSTOMER CONFIRMATION ──
 async function sendCustomerConfirmation({ callerName, callerEmail, callerPhone, serviceNeeded, callType, callTime, clientName }) {
-  const sender = process.env.EMAIL_USER;
   const firstName = esc(callerName ? callerName.split(' ')[0] : 'there');
   callerPhone   = esc(callerPhone);
   serviceNeeded = esc(serviceNeeded);
   callType      = esc(callType);
   callTime      = esc(callTime);
+  const _clientName = esc(clientName || 'our team');
 
   const html = `
 <!DOCTYPE html>
@@ -149,13 +155,13 @@ async function sendCustomerConfirmation({ callerName, callerEmail, callerPhone, 
   <tr><td align="center">
     <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
       <tr><td style="background:#1e3a5f;padding:28px;text-align:center;">
-        <h1 style="margin:0;color:#fff;font-size:22px;">⚡ Unitech Controls Inc.</h1>
+        <h1 style="margin:0;color:#fff;font-size:22px;">⚡ ${_clientName}</h1>
         <p style="margin:6px 0 0;color:#93c5fd;font-size:14px;">We received your message!</p>
       </td></tr>
       <tr><td style="padding:32px 28px;">
         <p style="font-size:16px;font-weight:600;color:#1e293b;margin:0 0 16px;">Hi ${firstName},</p>
         <p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 20px;">
-          Thank you for calling <strong>Unitech Controls Inc.</strong> — Ontario's industrial electrical specialists. 
+          Thank you for calling <strong>${_clientName}</strong>.
           We've received your inquiry and a member of our team will be in touch with you shortly.
         </p>
         <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:18px;margin-bottom:20px;">
@@ -172,18 +178,13 @@ async function sendCustomerConfirmation({ callerName, callerEmail, callerPhone, 
             ⏱️ <strong>Expected response time:</strong> ${callType === 'Emergency' ? 'Within 30 minutes — this has been flagged as urgent.' : 'Within 1 business day.'}
           </p>
         </div>
-        <p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 24px;">
-          If you need to reach us directly in the meantime, don't hesitate to call us at 
-          <strong>289-809-9128</strong> or email <strong>Sales@unitechcontrolsinc.com</strong>.
-        </p>
         <p style="font-size:14px;color:#374151;margin:0;">
-          Thank you for choosing Unitech Controls,<br/>
-          <strong>The Unitech Controls Team</strong>
+          Thank you for choosing ${_clientName},<br/>
+          <strong>The ${_clientName} Team</strong>
         </p>
       </td></tr>
       <tr><td style="background:#f8fafc;padding:16px 28px;text-align:center;border-top:1px solid #e2e8f0;">
-        <p style="margin:0;font-size:11px;color:#94a3b8;">Unitech Controls Inc. · Brantford & Sudbury, Ontario · 289-809-9128</p>
-        <p style="margin:4px 0 0;font-size:11px;color:#94a3b8;">Sales@unitechcontrolsinc.com · unitechcontrolsinc.com</p>
+        <p style="margin:0;font-size:11px;color:#94a3b8;">Powered by ElectricLead Pro</p>
       </td></tr>
     </table>
   </td></tr>
@@ -191,12 +192,7 @@ async function sendCustomerConfirmation({ callerName, callerEmail, callerPhone, 
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"Unitech Controls Inc." <${sender}>`,
-    to: callerEmail,
-    subject: `We received your call, ${firstName}! — Unitech Controls`,
-    html,
-  });
+  await send({ to: callerEmail, subject: `We received your call, ${firstName}! — ${clientName || 'Your electrician'}`, html, fromName: clientName || 'ElectricLead Pro' });
 }
 
 module.exports = { sendSecretaryEmail, sendCustomerConfirmation };
