@@ -38,6 +38,22 @@ router.post('/callback', async (req, res) => {
 
     const agentId = '58790e75-077e-4370-9ea5-151836ac7218';
     const blandKey = process.env.BLAND_API_KEY;
+    const personaName = client.persona_name || client.company_name + ' AI';
+
+    const task = `You are ${personaName}, the AI assistant for ${client.company_name}, a ${client.trade || 'trade'} company serving ${client.service_area || 'Ontario'}.
+
+A potential customer has requested a callback from the ${client.company_name} website. 
+
+Your job:
+1. Greet them warmly and introduce yourself as ${personaName}
+2. Ask how you can help them today
+3. Understand their need before asking for contact info
+4. Capture their name and confirm their phone number
+5. Let them know someone from the ${client.company_name} team will follow up shortly
+
+${client.emergency_keywords ? `EMERGENCY: If they mention ${client.emergency_keywords}, say immediately: "${client.emergency_protocol}"` : ''}
+
+Keep replies short and natural for a phone conversation. Never quote prices or promise specific appointment times.`;
 
     const response = await fetch('https://api.bland.ai/v1/calls', {
       method: 'POST',
@@ -48,14 +64,17 @@ router.post('/callback', async (req, res) => {
       body: JSON.stringify({
         phone_number: phone,
         agent_id: agentId,
+        task: task,
         request_data: {
           company_name: client.company_name,
-          persona_name: client.persona_name || client.company_name + ' AI',
+          persona_name: personaName,
         },
       }),
     });
 
     const data = await response.json();
+    console.log('Bland.ai response:', data);
+
     if (data.status === 'success' || data.call_id) {
       res.json({ success: true, callId: data.call_id });
     } else {
