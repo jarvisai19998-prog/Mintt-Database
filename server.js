@@ -31,17 +31,19 @@ app.get('/dashboard', (req, res) => res.redirect('/admin.html'));
 app.use(express.static('public'));
 
 // Routes
-const chatRoutes = require('./routes/chat');
-const adminRoutes = require('./routes/admin');
-const voiceRoutes = require('./routes/voice');
-const authRoutes = require('./routes/auth');
+const chatRoutes    = require('./routes/chat');
+const adminRoutes   = require('./routes/admin');
+const voiceRoutes   = require('./routes/voice');
+const authRoutes    = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
+const widgetRoutes  = require('./routes/widget');
 
-app.use('/chat', chatLimiter, chatRoutes);
-app.use('/admin', adminRoutes);
-app.use('/voice', voiceRoutes);
-app.use('/auth', authLimiter, authRoutes);
+app.use('/chat',      chatLimiter, chatRoutes);
+app.use('/admin',     adminRoutes);
+app.use('/voice',     voiceRoutes);
+app.use('/auth',      authLimiter, authRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/widget',    widgetRoutes);
 
 // Demo pages
 app.get('/demo/:company', (req, res) => {

@@ -104,3 +104,82 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_email_name_key ON users (email, name) WH
 INSERT INTO clients (company_name, slug, primary_color, secretary_email)
 VALUES ('Mintt', 'mintt', '#00c96b', 'office@mintt.ca')
 ON CONFLICT (slug) DO NOTHING;
+-- ── MIGRATION: Client-agnostic chatbot columns ────────────────────────────────
+
+-- Trade/industry (e.g. "industrial electrical", "plumbing", "HVAC")
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS trade VARCHAR(100);
+
+-- Service area description (e.g. "Greater Toronto Area and Southern Ontario")
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS service_area VARCHAR(255);
+
+-- Public-facing business email (distinct from secretary_email which is for alerts)
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS business_email VARCHAR(255);
+
+-- Business website
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS website VARCHAR(255);
+
+-- Services offered — stored as JSONB array of {name, description} objects
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS services JSONB DEFAULT '[]';
+
+-- Industries served — JSONB array of strings (optional, B2B clients)
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS industries_served JSONB DEFAULT '[]';
+
+-- Business hours / availability description
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS hours VARCHAR(255);
+
+-- AI persona display name (e.g. "Aria", "Max", "Unitech AI")
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS persona_name VARCHAR(100);
+
+-- Conversation tone (e.g. "professional", "friendly", "concise")
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS tone VARCHAR(50) DEFAULT 'professional';
+
+-- First message the AI sends when chat opens
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS greeting TEXT;
+
+-- End-of-call message for voice agent
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS end_call_message TEXT;
+
+-- Emergency trigger keywords (comma-separated, e.g. "no power,explosion,fire")
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS emergency_keywords TEXT;
+
+-- What the AI says/does when emergency keywords are detected
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS emergency_protocol TEXT;
+
+-- Vapi voice agent credentials (per-client so each client has their own assistant)
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS vapi_assistant_id VARCHAR(255);
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS vapi_public_key VARCHAR(255);
+
+-- Logo URL for white-label emails and widget branding
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS logo_url VARCHAR(500);
+
+-- One-liner description used in the AI prompt
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS one_liner TEXT;
+
+-- Physical address(es) — JSONB array of strings
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS locations JSONB DEFAULT '[]';
+
+-- ── Backfill Unitech Controls from hardcoded setup-unitech.js values ──────────
+UPDATE clients SET
+  trade               = 'industrial electrical and controls',
+  service_area        = 'Greater Toronto Area and Southern Ontario',
+  business_email      = 'info@unitechcontrols.com',
+  website             = 'https://unitechcontrols.com',
+  one_liner           = 'Industrial electrical contractor specializing in controls, automation, and power systems',
+  locations           = '["1234 Industrial Pkwy, Mississauga ON", "Toronto, ON"]',
+  hours               = '24/7 emergency service available',
+  persona_name        = 'Unitech AI',
+  tone                = 'professional',
+  greeting            = 'Hello! Thank you for contacting Unitech Controls. I''m here to help with your electrical and controls needs. How can I assist you today?',
+  end_call_message    = 'Thank you for calling Unitech Controls. We''ll have someone follow up with you shortly.',
+  emergency_keywords  = 'no power,power outage,explosion,fire,electrical fire,sparks,shutdown,emergency',
+  emergency_protocol  = 'This sounds like an emergency situation. Please call our 24/7 emergency line immediately at our main number. If there is immediate danger, call 911 first.',
+  services            = '[
+    {"name": "Industrial Electrical", "description": "Complete electrical installations and maintenance for industrial facilities"},
+    {"name": "Control Systems", "description": "PLC programming, SCADA systems, and automation controls"},
+    {"name": "Power Distribution", "description": "Switchgear, transformers, and power distribution systems"},
+    {"name": "Motor Controls", "description": "VFD installation, motor starters, and drive systems"},
+    {"name": "Energy Management", "description": "Energy audits, power monitoring, and efficiency upgrades"},
+    {"name": "Emergency Service", "description": "24/7 emergency electrical response"}
+  ]',
+  industries_served   = '["Manufacturing", "Oil & Gas", "Food & Beverage", "Automotive", "Warehousing & Logistics"]'
+WHERE slug = 'unitech' OR company_name ILIKE '%unitech%';
