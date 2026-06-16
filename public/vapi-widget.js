@@ -1,5 +1,5 @@
 (function () {
-  if (document.getElementById('mintt-widget')) return;
+  if (document.getElementById('mintt-widget-loaded')) return;
 
   var BASE_URL = 'https://mintt-database-production.up.railway.app';
   var clientSlug = window.__minttClientSlug || '';
@@ -8,6 +8,12 @@
     console.warn('[Mintt] No client slug found — widget will not load.');
     return;
   }
+
+  // Mark as loaded immediately to prevent double-load
+  var marker = document.createElement('div');
+  marker.id = 'mintt-widget-loaded';
+  marker.style.display = 'none';
+  document.body.appendChild(marker);
 
   fetch(BASE_URL + '/widget/config?slug=' + encodeURIComponent(clientSlug))
     .then(function (r) { return r.json(); })
@@ -61,11 +67,10 @@
       '.mintt-body{padding:0 18px 18px;}',
       '.mintt-intro{font-size:13px;color:#888;line-height:1.6;margin-bottom:16px;}',
       '.mintt-intro strong{color:#ccc;}',
-      '.mintt-input-wrap{position:relative;margin-bottom:12px;}',
       '.mintt-input{width:100%;height:48px;border-radius:12px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.12);color:#fff;font-size:15px;font-family:"Inter",sans-serif;padding:0 14px;box-sizing:border-box;outline:none;transition:border .15s;}',
       '.mintt-input:focus{border-color:' + color1 + ';}',
       '.mintt-input::placeholder{color:#444;}',
-      '.mintt-btn{width:100%;height:48px;border-radius:12px;background:linear-gradient(135deg,' + color1 + ',' + color2 + ');border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:600;color:#fff;font-family:"Inter",sans-serif;box-shadow:0 4px 20px ' + color1 + '4d;transition:all .2s;}',
+      '.mintt-btn{width:100%;height:48px;border-radius:12px;background:linear-gradient(135deg,' + color1 + ',' + color2 + ');border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:600;color:#fff;font-family:"Inter",sans-serif;box-shadow:0 4px 20px ' + color1 + '4d;transition:all .2s;margin-top:12px;}',
       '.mintt-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px ' + color1 + '73;}',
       '.mintt-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}',
       '.mintt-status{text-align:center;font-size:12px;color:#555;margin-top:10px;min-height:18px;}',
@@ -102,16 +107,12 @@
       '<div class="mintt-body">',
         '<p class="mintt-intro">Hi! I\'m <strong>' + personaName + '</strong> from <strong>' + companyName + '</strong>. Enter your phone number and I\'ll call you right now.</p>',
         '<input class="mintt-input" id="mintt-phone" type="tel" placeholder="Your phone number" />',
-        '<button class="mintt-btn" id="mintt-call-btn">' + phoneIcon + 'Call me now</button>',
+        '<button class="mintt-btn" id="mintt-call-btn">' + phoneIcon + ' Call me now</button>',
         '<div class="mintt-status" id="mintt-status"></div>',
         '<div class="mintt-note">Powered by Mintt</div>',
       '</div>',
     ].join('');
     document.body.appendChild(modal);
-
-    var w = document.createElement('div');
-    w.id = 'mintt-widget';
-    document.body.appendChild(w);
 
     function open() { modal.classList.add('open'); overlay.classList.add('open'); }
     function close() { modal.classList.remove('open'); overlay.classList.remove('open'); }
@@ -129,7 +130,7 @@
 
       var btn = document.getElementById('mintt-call-btn');
       btn.disabled = true;
-      btn.innerHTML = phoneIcon + 'Calling you...';
+      btn.innerHTML = phoneIcon + ' Calling you...';
       setStatus('', '');
 
       fetch(BASE_URL + '/widget/callback', {
@@ -141,17 +142,17 @@
         .then(function (data) {
           if (data.success) {
             setStatus('📞 Calling you now! Pick up in a moment.', 'success');
-            btn.innerHTML = phoneIcon + 'Call requested!';
+            btn.innerHTML = phoneIcon + ' Call requested!';
           } else {
             setStatus(data.error || 'Something went wrong. Try again.', 'error');
             btn.disabled = false;
-            btn.innerHTML = phoneIcon + 'Call me now';
+            btn.innerHTML = phoneIcon + ' Call me now';
           }
         })
         .catch(function () {
           setStatus('Connection error. Please try again.', 'error');
           btn.disabled = false;
-          btn.innerHTML = phoneIcon + 'Call me now';
+          btn.innerHTML = phoneIcon + ' Call me now';
         });
     };
 
